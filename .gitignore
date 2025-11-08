@@ -3,3 +3,6 @@ build/
 .vscode/
 .idea/
 .cache/
+
+# Ignore compile commands
+compile_commands.json
