@@ -1,21 +1,25 @@
-#include <fstream>
 #include <iostream>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+#include "utils.hpp"
+#include "program.hpp"
 
-std::string read_file(const char* filepath);
-void check_compile_errors(unsigned int shader, const std::string& type);
-
-int main() {
-  std::cout << "Hello, OpenGL Tutorial!" << std::endl;
-
-  if (!glfwInit()) {
-    std::cerr << "Failed to initialize GLFW" << std::endl;
+int main(int argc, char** argv) {
+  if (argc < 3) {
+    std::cerr << "Usage: " << argv[0]
+              << " <vertex_shader_path> <fragment_shader_path>\n";
     return -1;
   }
 
-  std::cout << "GLFW initialized successfully!" << std::endl;
+  std::cout << "Hello, OpenGL Tutorial!\n";
+
+  if (!glfwInit()) {
+    std::cerr << "Failed to initialize GLFW\n";
+    return -1;
+  }
+
+  std::cout << "GLFW initialized successfully!\n";
   std::cout << "GLFW version: " << glfwGetVersionString() << std::endl;
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -25,7 +29,7 @@ int main() {
   GLFWwindow* window =
       glfwCreateWindow(800, 600, "OpenGL Tutorial", nullptr, nullptr);
   if (!window) {
-    std::cerr << "Failed to create GLFW window" << std::endl;
+    std::cerr << "Failed to create GLFW window\n";
     glfwTerminate();
     return -1;
   }
@@ -33,100 +37,55 @@ int main() {
 
   int version = gladLoadGL(glfwGetProcAddress);
   if (version == 0) {
-    std::cerr << "Failed to initialize GLAD" << std::endl;
+    std::cerr << "Failed to initialize GLAD\n";
     glfwDestroyWindow(window);
     glfwTerminate();
     return -1;
   }
 
-  std::cout << "GLAD initialized successfully!" << std::endl;
+  std::cout << "GLAD initialized successfully!\n";
   std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
   std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION)
             << std::endl;
   std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
 
+  const char* vertex_path = argv[1];
+  const char* fragment_path = argv[2];
+  Program program(vertex_path, fragment_path);
+
   float vertices[] = {-0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f};
 
-  unsigned int vbo;
+  unsigned int vao, vbo;
+  glGenVertexArrays(1, &vao);
   glGenBuffers(1, &vbo);
+  glBindVertexArray(vao);
+
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
 
-  auto vert_shader_src = read_file("shader.vert");
-  auto vert_src = vert_shader_src.c_str();
-  auto frag_shader_src = read_file("shader.frag");
-  auto frag_src = frag_shader_src.c_str();
-  std::cout << "Fragment Shader Source:\n" << frag_shader_src << std::endl;
-  unsigned int vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vertex_shader, 1, &vert_src, nullptr);
-  glCompileShader(vertex_shader);
-  check_compile_errors(vertex_shader, "VERTEX");
-  unsigned int fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fragment_shader, 1, &frag_src, nullptr);
-  glCompileShader(fragment_shader);
-  check_compile_errors(fragment_shader, "FRAGMENT");
-
-  unsigned int shader_program = glCreateProgram();
-  glAttachShader(shader_program, vertex_shader);
-  glAttachShader(shader_program, fragment_shader);
-  glLinkProgram(shader_program);
-  check_compile_errors(shader_program, "PROGRAM");
-
-  glDeleteShader(vertex_shader);
-  glDeleteShader(fragment_shader);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
   glEnableVertexAttribArray(0);
-  glUseProgram(shader_program);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindVertexArray(0);
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    // Rendering commands would go here
+    program.use();
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+    program.suspend();
 
     glfwSwapBuffers(window);
   }
 
+  glDeleteVertexArrays(1, &vao);
+  glDeleteBuffers(1, &vbo);
   glfwDestroyWindow(window);
   glfwTerminate();
 
   return 0;
-}
-
-std::string read_file(const char* filepath) {
-  std::ifstream file(filepath, std::ios::binary | std::ios::ate);
-  if (!file) return {};
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::string buffer(size, '\0');
-  if (!file.read(buffer.data(), size)) {
-    return {};
-  }
-  return buffer;
-}
-
-void check_compile_errors(unsigned int shader, const std::string& type) {
-  int success;
-  char infoLog[1024];
-  if (type != "PROGRAM") {
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-      glGetShaderInfoLog(shader, 1024, nullptr, infoLog);
-      std::cerr
-          << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n"
-          << infoLog
-          << "\n -- --------------------------------------------------- -- \n";
-    }
-  } else {
-    glGetProgramiv(shader, GL_LINK_STATUS, &success);
-    if (!success) {
-      glGetProgramInfoLog(shader, 1024, nullptr, infoLog);
-      std::cerr
-          << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n"
-          << infoLog
-          << "\n -- --------------------------------------------------- -- \n";
-    }
-  }
 }

@@ -10,7 +10,6 @@ include_directories(includes)
 
 # Collect all source files from src/ directory
 file(GLOB_RECURSE SOURCES "src/*.cpp")
-
 # Collect all header files from includes/ directory (optional, for IDE support)
 file(GLOB_RECURSE HEADERS "includes/*.h" "includes/*.hpp")
 
