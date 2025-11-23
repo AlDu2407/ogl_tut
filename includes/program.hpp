@@ -8,8 +8,8 @@ class Program {
     public:
         Program(const char* vertex_path, const char* fragment_path);
         ~Program();
-        void use();
-        void suspend();
+        void use() const;
+        void suspend() const;
         unsigned int getID() const { return m_id; }
 
     private:

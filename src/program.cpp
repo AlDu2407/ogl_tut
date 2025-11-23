@@ -13,9 +13,9 @@ Program::~Program() {
   glDeleteProgram(m_id);
 }
 
-void Program::use() { glUseProgram(m_id); }
+void Program::use() const { glUseProgram(m_id); }
 
-void Program::suspend() { glUseProgram(0); }
+void Program::suspend() const { glUseProgram(0); }
 
 void Program::compile_program(const char* vertex_code,
                               const char* fragment_code) {
