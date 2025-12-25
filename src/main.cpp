@@ -2,9 +2,9 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include "utils.hpp"
-#include "program.hpp"
-#include "buffer_layout.hpp"
+#include <utils.hpp>
+#include <program.hpp>
+#include <buffer_layout.hpp>
 #include <vertex_buffer.hpp>
 #include <vertex_array.hpp>
 #include <index_buffer.hpp>
@@ -58,67 +58,50 @@ int main(int argc, char** argv) {
   const char* fragment_path = argv[2];
   Program program(vertex_path, fragment_path);
 
-  float positions[] = {-0.5f, -0.5f, 0.5f, -0.5, 0.5f, 0.5f, -0.5f, 0.5f};
+  float first[] = {-0.9f, -0.5f, -0.0f, -0.5f, -0.45f, 0.5f};
+  float second[] = {0.0f, -0.5f, 0.9f, -0.5f, 0.45f, 0.5f};
 
-  unsigned int indices[] = {0, 1, 2, 2, 3, 0};
+  // float positions[] = {-0.5f, -0.5f, 0.5f, -0.5, 0.5f, 0.5f, -0.5f, 0.5f};
 
-  unsigned int size = 4 * 2 * sizeof(float);
+  unsigned int indices[] = {0, 1, 2};
+
+  unsigned int size = 3 * 2 * sizeof(float);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   VertexArray vertex_array;
-  VertexBuffer vertex_buffer(positions, size);
-
+  VertexBuffer vertex_buffer(first, size);
   VertexBufferLayout buffer_layout;
   buffer_layout.push<float>(2);
   vertex_array.add_buffer(vertex_buffer, buffer_layout);
   IndexBuffer index_buffer(indices, sizeof(indices) / sizeof(unsigned int));
   program.use();
-  
   vertex_array.suspend();
   program.suspend();
   vertex_buffer.suspend();
   index_buffer.suspend();
+
+  VertexArray other_vertex_array;
+  VertexBuffer other_vertex_buffer(second, size);
+  VertexBufferLayout other_buffer_layout;
+  other_buffer_layout.push<float>(2);
+  other_vertex_array.add_buffer(other_vertex_buffer, other_buffer_layout);
+  IndexBuffer other_index_buffer(indices,
+                                 sizeof(indices) / sizeof(unsigned int));
+  program.use();
+  other_vertex_array.suspend();
+  program.suspend();
+  other_vertex_buffer.suspend();
+  other_index_buffer.suspend();
+
   Renderer renderer;
 
-  // float vertices[] = {
-  //   -0.5f, -0.5f, 0.0f, // Position
-  //   1.0f, 0.0f, 0.0f, // Color
-  //   0.5f, -0.5f, 0.0f, //
-  //   0.0f, 1.0f, 0.0f, //
-  //   0.0f, 0.5f, 0.0f, //
-  //   0.0f, 0.0f, 1.0f  //
-  // };
-
-  // unsigned int vao, vbo;
-  // glCreateVertexArrays(1, &vao);
-  // glCreateBuffers(1, &vbo);
-  // glBindVertexArray(vao);
-
-  // glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
-
-  // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
-  // (void*)0); glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 *
-  // sizeof(float), (void*)(3 * sizeof(float))); glEnableVertexAttribArray(0);
-  // glEnableVertexAttribArray(1);
-  // glBindBuffer(GL_ARRAY_BUFFER, 0);
-  // glBindVertexArray(0);
-
   while (!glfwWindowShouldClose(window)) {
-    // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    // glClear(GL_COLOR_BUFFER_BIT);
-
-    // program.use();
-    // glBindVertexArray(vao);
-    // glDrawArrays(GL_TRIANGLES, 0, 3);
-    // glBindVertexArray(0);
-    // program.suspend();
-
     renderer.clear();
 
     renderer.draw(vertex_array, index_buffer, program);
+    renderer.draw(other_vertex_array, other_index_buffer, program);
 
     glfwSwapBuffers(window);
 
