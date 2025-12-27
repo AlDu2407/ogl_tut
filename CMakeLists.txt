@@ -11,7 +11,7 @@ include_directories(includes)
 # Collect all source files from src/ directory
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 # Collect all header files from includes/ directory (optional, for IDE support)
-file(GLOB_RECURSE HEADERS "includes/*.h" "includes/*.hpp")
+file(GLOB_RECURSE HEADERS "include/*.h" "include/*.hpp")
 
 # Create executable with all source files
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
@@ -19,7 +19,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 # Add include directories to target
 target_include_directories(${PROJECT_NAME} PRIVATE
-    includes
+    include
 )
 
 # Link libraries
