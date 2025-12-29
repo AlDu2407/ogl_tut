@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 # Add include directories to target
 target_include_directories(${PROJECT_NAME} PRIVATE
     include
+    deps/stb/include
 )
 
 # Link libraries
@@ -27,4 +28,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenGL
     glad_gl_core_43
     glfw
+    glm::glm
 )

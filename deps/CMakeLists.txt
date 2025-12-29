@@ -9,6 +9,14 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glfw)
 
 FetchContent_Declare(
+	glm
+	GIT_REPOSITORY	https://github.com/g-truc/glm.git
+	GIT_TAG 	1.0.2
+)
+
+FetchContent_MakeAvailable(glm)
+
+FetchContent_Declare(
     glad
     GIT_REPOSITORY https://github.com/Dav1dde/glad.git
     GIT_TAG v2.0.8

@@ -2,6 +2,7 @@
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
+
 #include <utils.hpp>
 #include <program.hpp>
 #include <buffer_layout.hpp>
@@ -9,14 +10,14 @@
 #include <vertex_array.hpp>
 #include <index_buffer.hpp>
 #include <renderer.hpp>
+#include <texture_manager.hpp>
+#include <debug.hpp>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 int main(int argc, char** argv) {
-  if (argc < 3) {
-    std::cerr << "Usage: " << argv[0]
-              << " <vertex_shader_path> <fragment_shader_path>\n";
-    return -1;
-  }
-
   std::cout << "Hello, OpenGL Tutorial!\n";
 
   if (!glfwInit()) {
@@ -32,7 +33,7 @@ int main(int argc, char** argv) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   GLFWwindow* window =
-      glfwCreateWindow(800, 600, "OpenGL Tutorial", nullptr, nullptr);
+      glfwCreateWindow(1400, 960, "OpenGL Tutorial", nullptr, nullptr);
   if (!window) {
     std::cerr << "Failed to create GLFW window\n";
     glfwTerminate();
@@ -54,18 +55,32 @@ int main(int argc, char** argv) {
             << std::endl;
   std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
 
-  const char* vertex_path = argv[1];
-  const char* fragment_path = argv[2];
+  glDebugMessageCallback(gl_debug_output, nullptr);
+
+  std::string vertex_path(
+      "/home/aldu/projects/cpp/ogl_tut/assets/shaders/vertex.glsl");
+  std::string fragment_path(
+      "/home/aldu/projects/cpp/ogl_tut/assets/shaders/fragment.glsl");
+  std::string container_path(
+      "/home/aldu/projects/cpp/ogl_tut/assets/textures/container.jpg");
+  std::string awesomeface_path(
+      "/home/aldu/projects/cpp/ogl_tut/assets/textures/awesomeface.png");
+
   Program program(vertex_path, fragment_path);
 
-  float first[] = {-0.9f, -0.5f, -0.0f, -0.5f, -0.45f, 0.5f};
-  float second[] = {0.0f, -0.5f, 0.9f, -0.5f, 0.45f, 0.5f};
+  float first[] = {
+      // positions  // colors         // texCoords
+      -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,  // bottom left
+      0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,  // bottom right
+      -0.5f, 0.5f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  // top left
+      0.5f,  0.5f,  1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top rights
+  };
 
-  // float positions[] = {-0.5f, -0.5f, 0.5f, -0.5, 0.5f, 0.5f, -0.5f, 0.5f};
-
-  unsigned int indices[] = {0, 1, 2};
-
-  unsigned int size = 3 * 2 * sizeof(float);
+  unsigned int indices[] = {0, 1, 2, 3, 1, 2};
+  // (2 floats for position + 3 floats for color + 2 floats for texture
+  // coordinates) * 4 vertices
+  unsigned int size = (2 + 3 + 2) * 4 * sizeof(float);
+  unsigned int indice_size = sizeof(indices) / sizeof(unsigned int);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -74,42 +89,40 @@ int main(int argc, char** argv) {
   VertexBuffer vertex_buffer(first, size);
   VertexBufferLayout buffer_layout;
   buffer_layout.push<float>(2);
+  buffer_layout.push<float>(3);
+  buffer_layout.push<float>(2);
   vertex_array.add_buffer(vertex_buffer, buffer_layout);
-  IndexBuffer index_buffer(indices, sizeof(indices) / sizeof(unsigned int));
+  IndexBuffer index_buffer(indices, indice_size);
   program.use();
   vertex_array.suspend();
   program.suspend();
   vertex_buffer.suspend();
   index_buffer.suspend();
 
-  VertexArray other_vertex_array;
-  VertexBuffer other_vertex_buffer(second, size);
-  VertexBufferLayout other_buffer_layout;
-  other_buffer_layout.push<float>(2);
-  other_vertex_array.add_buffer(other_vertex_buffer, other_buffer_layout);
-  IndexBuffer other_index_buffer(indices,
-                                 sizeof(indices) / sizeof(unsigned int));
-  program.use();
-  other_vertex_array.suspend();
-  program.suspend();
-  other_vertex_buffer.suspend();
-  other_index_buffer.suspend();
-
   Renderer renderer;
+  TextureManager texture_manager;
+  texture_manager.load_texture(container_path);
+  texture_manager.load_texture(awesomeface_path);
 
   while (!glfwWindowShouldClose(window)) {
     renderer.clear();
+    auto time = static_cast<float>(glfwGetTime());
+    auto x = static_cast<float>(sin(time));
+    glm::mat4 transform(1.0f);
+    transform = glm::translate(transform, glm::vec3(x, 0.0f, 0.0f));
+    transform = glm::rotate(transform, time, glm::vec3(0.0f, 0.0f, 1.0f));
+    transform = glm::scale(transform, glm::vec3(0.5f, 0.5f, 0.5f));
+    program.use();
+    program.set_uniform_matrix4fv("transform", glm::value_ptr(transform));
+    program.suspend();
 
-    renderer.draw(vertex_array, index_buffer, program);
-    renderer.draw(other_vertex_array, other_index_buffer, program);
+    renderer.draw(vertex_array, index_buffer, texture_manager, program);
 
     glfwSwapBuffers(window);
 
     glfwPollEvents();
   }
 
-  // glDeleteVertexArrays(1, &vao);
-  // glDeleteBuffers(1, &vbo);
   glfwDestroyWindow(window);
   glfwTerminate();
 
