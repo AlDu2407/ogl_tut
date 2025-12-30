@@ -12,8 +12,14 @@
 class Renderer {
  public:
   void clear() const;
-  void draw(const VertexArray& vertex_array, const IndexBuffer& index_buffer,
-            const TextureManager& texture_manager, Program& program) const;
+  void draw_elements(const VertexArray& vertex_array,
+                     const IndexBuffer& index_buffer,
+                     const TextureManager& texture_manager,
+                     Program& program) const;
+
+  void draw_arrays(const VertexArray& vertex_array,
+                   const TextureManager& texture_manager,
+                   Program& program, unsigned int count) const;
 };
 
 #endif  // RENDERER_HPP

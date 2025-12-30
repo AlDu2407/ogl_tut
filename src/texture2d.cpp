@@ -13,7 +13,6 @@ Texture2D::Texture2D(std::string path, unsigned int index)
 }
 
 Texture2D::~Texture2D() { 
-  std::cout << "Deleting texture ID: " << m_id << " at path: " << m_path << std::endl;
   glDeleteTextures(1, &m_id); 
 }
 
